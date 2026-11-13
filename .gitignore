@@ -1,0 +1,27 @@
+# environment
+.env
+
+# data and trained artifacts
+data/
+backend/artifacts/*
+!backend/artifacts/.gitkeep
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# node
+node_modules/
+frontend/.next/
+frontend/out/
+*.tsbuildinfo
+next-env.d.ts
+
+# os / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
