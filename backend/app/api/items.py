@@ -1,10 +1,11 @@
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import distinct, func, select
+from sqlalchemy import delete, distinct, func, select
 from sqlalchemy.orm import Session, defer
 
-from app.db.models import Item
+from app.api.deps import OptionalUser
+from app.db.models import Interaction, Item, LlmCache, Rating
 from app.db.session import get_db
 from app.recsys.content import SqlContentRecommender
 from app.recsys.types import Domain
@@ -64,8 +65,19 @@ def get_item_or_404(db: Session, item_id: int, *, with_embedding: bool = False) 
 
 
 @router.get("/{item_id}", response_model=ItemDetail)
-def get_item(item_id: int, db: Db) -> ItemDetail:
-    return ItemDetail.model_validate(get_item_or_404(db, item_id))
+def get_item(item_id: int, db: Db, user: OptionalUser) -> ItemDetail:
+    item = get_item_or_404(db, item_id)
+    result = ItemDetail.model_validate(item)
+    if user is not None:
+        result.my_rating = db.scalar(select(Rating.value).where(
+            Rating.user_id == user.id, Rating.item_id == item_id,
+        ))
+        db.add(Interaction(user_id=user.id, item_id=item_id, kind="view"))
+        db.execute(delete(LlmCache).where(
+            LlmCache.user_id == user.id, LlmCache.domain == item.domain,
+        ))
+        db.commit()
+    return result
 
 
 @router.get("/{item_id}/similar", response_model=list[SimilarItem])

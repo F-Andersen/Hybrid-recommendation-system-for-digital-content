@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 
-from app.api import admin, health, items
+from app.api import admin, auth, health, items, me, onboarding, ratings, recommendations
 from app.core.config import get_settings
 from app.llm.client import OllamaClient
 from app.recsys.als import load_available_models
@@ -23,3 +23,8 @@ app = FastAPI(title="Hybrid Recommender API", version="0.1.0", lifespan=lifespan
 app.include_router(health.router)
 app.include_router(items.router)
 app.include_router(admin.router)
+app.include_router(auth.router)
+app.include_router(ratings.router)
+app.include_router(me.router)
+app.include_router(onboarding.router)
+app.include_router(recommendations.router)
