@@ -69,7 +69,8 @@
 
 ## Швидкий старт
 
-Стан реалізації: етап 0 (каркас) готовий; скрипти даних і моделей з'являться на етапах 1–3.
+Стан реалізації: готові каркас, схема БД та скрипти підготовки даних (етапи 0–1).
+Рекомендаційні моделі, користувацький API та каталог в інтерфейсі — наступні етапи.
 
 Завантажити моделі:
 
@@ -97,7 +98,13 @@ docker compose up -d --build
 docker compose watch
 ```
 
-Тести й лінтер backend:
+Підготувати схему БД:
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+Тести й лінтер backend (інтеграційні тести використовують тимчасові схеми PostgreSQL):
 
 ```bash
 docker compose exec api pytest
@@ -107,11 +114,7 @@ docker compose exec api pytest
 docker compose exec api ruff check .
 ```
 
-Застосувати міграції, завантажити дані, порахувати ембединги, навчити ALS:
-
-```bash
-docker compose exec api alembic upgrade head
-```
+Завантажити та імпортувати дані:
 
 ```bash
 docker compose exec api python -m scripts.download_data
@@ -129,15 +132,16 @@ docker compose exec api python -m scripts.import_bookcrossing
 docker compose exec api python -m scripts.enrich_openlibrary
 ```
 
-```bash
-docker compose exec api python -m scripts.build_embeddings
-```
-
-```bash
-docker compose exec api python -m scripts.train_als
-```
-
 Відкрити http://localhost:3000 (головна сторінка показує стан усіх компонентів). Документація API: http://localhost:8000/docs. Порти — з `WEB_HOST_PORT` і `API_HOST_PORT`.
+
+Побудова ембедингів (`scripts.build_embeddings`) і навчання ALS (`scripts.train_als`)
+ще не реалізовані: це етапи 2 і 3. Тому стан ALS на головній сторінці поки «не навчено».
+
+Скрипти даних можна запускати повторно: імпорт оновлює записи за зовнішніми ID,
+не дублюючи їх, а Open Library використовує дисковий кеш. Кожен імпорт виконується
+в одній транзакції; збагачення зберігає результат після кожного пакета з 50 книг.
+Для короткої перевірки мережі: `python -m scripts.enrich_openlibrary --limit 50`
+усередині контейнера `api`.
 
 ## Змінні середовища (`.env`)
 
@@ -164,9 +168,29 @@ docker compose exec api python -m scripts.train_als
 
 Датасети завантажуються скриптом у том `rawdata` і в репозиторій не потрапляють.
 
+Офіційний сервер Book-Crossing недоступний. За замовчуванням `download_data`
+бере сирі `BX-*.csv.gz` з [копії zheng-da/BookCrossing](https://github.com/zheng-da/BookCrossing/tree/b21eb595d30bb0a9cda840be937af02b9b7bfa77),
+зафіксованої на коміті `b21eb595d30bb0a9cda840be937af02b9b7bfa77`.
+Виправлені файли та готові навчальні/тестові підвибірки з цього репозиторію не використовуються.
+Походження файлів записується в `*.source.json` у томі даних.
+Оригінальний `BX-CSV-Dump.zip`, якщо він є, можна скопіювати в `/app/data/`:
+тоді скрипт використає його. Інший URL архіву задається через `--bookcrossing-url`;
+повернення до старого джерела — через `--bookcrossing-source official`.
+
+MovieLens за замовчуванням — `ml-latest-small`. Для експериментів обидва скрипти
+`download_data` й `import_movielens` приймають `--variant ml-1m`.
+Варіанти потрібно імпортувати в різні бази: ID користувачів між ними не узгоджені,
+і скрипт відхиляє спробу змішати їх. Для вже розпакованих файлів імпортери мають
+`--input-dir` (шлях усередині контейнера).
+
+Book-Crossing проходить повторну k-core-фільтрацію: ≥ 5 взаємодій на користувача,
+≥ 10 на книгу. Неявна оцінка `0` зберігається як `implicit=true, value=NULL`.
+`rating_count` враховує всі взаємодії, `rating_avg` — лише явні оцінки у шкалі 1–10.
+
 ## Наукова частина
 
-Порівнюються моделі: популярність (базова лінія), контентна, колаборативна (ALS), гібридна, гібридна + LLM-переранжування. Метрики: Precision@K, Recall@K, NDCG@K для K ∈ {5, 10, 20}.
+Заплановано на етап 7 (скрипт `evaluate` і сторінка `/evaluation` ще не реалізовані).
+Порівнюватимуться моделі: популярність (базова лінія), контентна, колаборативна (ALS), гібридна, гібридна + LLM-переранжування. Метрики: Precision@K, Recall@K, NDCG@K для K ∈ {5, 10, 20}.
 
 ```bash
 docker compose exec api python -m scripts.evaluate --domain movie
