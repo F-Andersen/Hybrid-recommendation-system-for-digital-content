@@ -50,6 +50,8 @@ class Item(Base):
         Index("ix_items_genres", "genres", postgresql_using="gin"),
         Index("ix_items_title_trgm", "title", postgresql_using="gin",
               postgresql_ops={"title": "gin_trgm_ops"}),
+        Index("ix_items_embedding_hnsw", "embedding", postgresql_using="hnsw",
+              postgresql_ops={"embedding": "vector_cosine_ops"}),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)

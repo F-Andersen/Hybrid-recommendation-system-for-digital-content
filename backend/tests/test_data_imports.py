@@ -1,32 +1,16 @@
 """Exercise actual PostgreSQL upserts in an isolated, rolled-back schema."""
 
 import csv
-from uuid import uuid4
 
 import httpx
 import pytest
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker
 
-from app.db.models import Base, Item, Rating, User
-from app.db.session import engine
+from app.db.models import Item, Rating, User
 from scripts.enrich_openlibrary import OpenLibraryClient, enrich
 from scripts.import_bookcrossing import import_dataset as import_books
 from scripts.import_movielens import import_dataset as import_movies
-
-
-@pytest.fixture
-def sessions():
-    with engine.connect() as connection:
-        transaction = connection.begin()
-        schema = "test_import_" + uuid4().hex
-        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
-        connection.execute(text(f'SET LOCAL search_path TO "{schema}", public'))
-        # Public catalog tables may already exist; always create the isolated copies.
-        Base.metadata.create_all(connection, checkfirst=False)
-        yield sessionmaker(bind=connection, join_transaction_mode="create_savepoint")
-        transaction.rollback()
 
 
 def write_csv(path, columns, rows, delimiter=",", encoding="utf-8"):
