@@ -9,7 +9,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.db.models import Item
-from app.recsys.types import Domain, UserHistory
+from app.recsys.types import Domain, UserHistory, history_ids
 from app.recsys.vectors import EMBEDDING_DIMENSION, normalize_vectors
 
 
@@ -40,10 +40,6 @@ def build_item_text(item: ContentItem) -> str:
     if item.description:
         lines.append("Description: " + item.description[:1500])
     return "\n".join(lines)
-
-
-def history_ids(user: UserHistory) -> set[int]:
-    return {rating.item_id for rating in user.ratings} | set(user.views)
 
 
 def build_user_profile(

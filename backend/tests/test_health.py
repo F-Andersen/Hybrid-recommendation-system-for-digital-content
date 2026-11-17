@@ -9,6 +9,7 @@ from app.main import app
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.setattr(health, "check_db", lambda: health.DbStatus(ok=True, pgvector=True))
+    monkeypatch.setattr("app.main.load_available_models", lambda _: {})
     with TestClient(app) as c:
         yield c
 

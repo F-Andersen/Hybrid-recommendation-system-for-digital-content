@@ -8,7 +8,8 @@ from app.main import app
 
 
 @pytest.fixture
-def catalog_client(sessions, catalog):
+def catalog_client(sessions, catalog, monkeypatch):
+    monkeypatch.setattr("app.main.load_available_models", lambda _: {})
     def database():
         with sessions() as session:
             yield session

@@ -11,6 +11,8 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.models import Base, Item
 from app.db.session import engine
+from app.recsys.als import AlsParameters, train_als
+from app.recsys.types import HistoryRating
 from app.recsys.vectors import normalize_vectors
 
 
@@ -49,3 +51,18 @@ def catalog(sessions):
                 rating_count=index, rating_avg=8, embedding=vector,
             ))
     return vectors
+
+
+@pytest.fixture
+def small_als():
+    user_ids, item_ids = list(range(100, 112)), list(range(1000, 1030))
+    ratings = []
+    for index, user_id in enumerate(user_ids):
+        group = 0 if index < 6 else 10
+        for shift in range(5):
+            item = 1000 + group + (index + shift) % 10
+            ratings.append((user_id, HistoryRating(item, None if shift == 0 else 8, shift == 0)))
+        ratings.append((user_id, HistoryRating(1010 if index < 6 else 1000, 2)))
+    model = train_als(user_ids, item_ids, ratings,
+                      AlsParameters(factors=8, iterations=5, num_threads=1))
+    return model, ratings
