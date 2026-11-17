@@ -1,3 +1,7 @@
+import json
+import re
+from typing import Any
+
 import httpx
 
 from app.recsys.vectors import normalize_vectors
@@ -11,7 +15,7 @@ def normalize_model_name(name: str) -> str:
 class OllamaClient:
     """Thin async wrapper over the Ollama HTTP API.
 
-    Embeddings are validated and L2-normalized; JSON chat is added in stage 5.
+    Embeddings are normalized; chat uses a JSON schema and disables thinking.
     """
 
     def __init__(self, base_url: str, timeout: float = 120.0) -> None:
@@ -38,3 +42,23 @@ class OllamaClient:
 
     async def aclose(self) -> None:
         await self._http.aclose()
+
+    async def chat_json(
+        self, messages: list[dict[str, str]], schema: dict[str, Any], model: str,
+    ) -> dict[str, Any]:
+        response = await self._http.post("/api/chat", json={
+            "model": model, "messages": messages, "format": schema,
+            "stream": False, "think": False, "keep_alive": "30m",
+            "options": {"temperature": 0.3, "num_ctx": 8192, "num_predict": 2048, "seed": 42},
+        })
+        response.raise_for_status()
+        envelope = response.json()
+        message = envelope.get("message") if isinstance(envelope, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str):
+            raise ValueError("Ollama не повернув текст JSON")
+        content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+        payload = json.loads(content)
+        if not isinstance(payload, dict):
+            raise ValueError("Відповідь Ollama має бути JSON-об'єктом")
+        return payload

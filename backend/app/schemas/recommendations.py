@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from app.recsys.types import Domain
 from app.schemas.items import ItemSummary
 
 
@@ -14,3 +15,7 @@ class RecommendationItem(BaseModel):
     score: float
     sources: RecommendationSources
     explanation: str | None = None
+
+
+class ExplainRequest(BaseModel):
+    domain: Domain = "movie"

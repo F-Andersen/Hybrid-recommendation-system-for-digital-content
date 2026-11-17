@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from weakref import WeakValueDictionary
 
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
@@ -15,6 +16,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     app.state.ollama = OllamaClient(settings.ollama_base_url)
     app.state.als_models = await run_in_threadpool(load_available_models, settings.artifacts_dir)
+    app.state.llm_locks = WeakValueDictionary()
     yield
     await app.state.ollama.aclose()
 
