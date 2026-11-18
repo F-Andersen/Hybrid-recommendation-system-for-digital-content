@@ -1,8 +1,17 @@
+import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 from app.recsys.splits import Interaction
 from app.recsys.types import UserHistory
-from scripts.evaluate import CachedRecommender, markdown_table, metric_rows, truncate_histories
+from scripts.evaluate import (
+    CachedRecommender,
+    markdown_table,
+    metric_rows,
+    redraw,
+    truncate_histories,
+    write_csv,
+)
 from tests.test_splits import rows as make_rows
 
 
@@ -49,3 +58,17 @@ def test_report_rows_and_table():
     assert {(r["metric"], r["value"]) for r in rows} == {
         ("precision", 0.2), ("recall", 1.0), ("ndcg", 1.0)}
     assert "| ALS | 0.2000 | 1.0000 | 1.0000 |" in markdown_table(rows, "all", [5])
+
+
+def test_redraw_rebuilds_charts_from_saved_report(tmp_path: Path) -> None:
+    rows = [{"model": model, "segment": segment, "k": k, "metric": metric,
+             "value": 0.01 * (i + 1), "users": 3}
+            for i, model in enumerate(("popular", "als", "hybrid_weighted"))
+            for segment in ("all", "cold_sim") for k in (5, 10, 20)
+            for metric in ("precision", "recall", "ndcg")]
+    write_csv(tmp_path / "movie_2026-01-02.csv", rows)
+    (tmp_path / "movie_latest.json").write_text(
+        json.dumps({"files": {"csv": "movie_2026-01-02.csv"}}), encoding="utf-8")
+    files = redraw(tmp_path, "movie")
+    assert files == ["movie_2026-01-02_ndcg10.png", "movie_2026-01-02_by_k.png"]
+    assert all((tmp_path / name).stat().st_size > 0 for name in files)

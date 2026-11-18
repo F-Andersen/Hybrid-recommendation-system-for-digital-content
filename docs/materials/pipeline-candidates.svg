@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" width="1000" height="540" font-family="'IBM Plex Sans','Segoe UI',Arial,sans-serif" fill="#16161a">
+  <title>Генерація кандидатів і гібридне злиття</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#16161a"/>
+    </marker>
+    <style>
+      .box{fill:#fafaf7;stroke:#16161a;stroke-width:2}
+      .alt{fill:#fafaf7;stroke:#16161a;stroke-width:1.8;stroke-dasharray:7 5}
+      .h{font-weight:700;font-size:24px}
+      .t{font-size:21px}
+      .m{font-family:'IBM Plex Mono',Consolas,monospace;font-size:19px}
+      .lb{font-family:'IBM Plex Mono',Consolas,monospace;font-size:18px}
+      .ln{stroke:#16161a;stroke-width:2;fill:none;marker-end:url(#a)}
+      .dl{stroke:#16161a;stroke-width:1.8;fill:none;stroke-dasharray:7 5;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="1000" height="540" fill="#ffffff"/>
+
+  <rect class="box" x="10" y="170" width="190" height="150"/>
+  <text class="h" x="24" y="206">Історія</text>
+  <text class="t" x="24" y="238">оцінки 1–10,</text>
+  <text class="t" x="24" y="266">неявні</text>
+  <text class="t" x="24" y="294">взаємодії</text>
+
+  <rect class="box" x="260" y="30" width="280" height="140"/>
+  <text class="h" x="276" y="66">ALS (implicit)</text>
+  <text class="t" x="276" y="98">латентні фактори</text>
+  <text class="m" x="276" y="148">top-200</text>
+
+  <rect class="box" x="260" y="210" width="280" height="140"/>
+  <text class="h" x="276" y="246">Контент (BGE-M3)</text>
+  <text class="t" x="276" y="278">профіль = середнє</text>
+  <text class="t" x="276" y="306">векторів, pgvector</text>
+  <text class="m" x="276" y="336">top-200</text>
+
+  <rect class="box" x="600" y="30" width="390" height="320"/>
+  <text class="h" x="616" y="66">Гібридне злиття</text>
+  <text class="t" x="616" y="100">min-max нормалізація</text>
+  <text class="m" x="616" y="140">s = α·ALS + (1−α)·C</text>
+  <text class="m" x="616" y="174">α = α_max·min(1, n/n_full)</text>
+  <text class="t" x="616" y="210">n — позитивні оцінки;</text>
+  <text class="t" x="616" y="238">новачок → більше контенту</text>
+  <text class="t" x="616" y="282">варіант: RRF за рангами</text>
+  <text class="m" x="616" y="330">→ упорядкований список</text>
+
+  <rect class="alt" x="260" y="400" width="280" height="125"/>
+  <text class="h" x="276" y="436">Популярність</text>
+  <text class="t" x="276" y="468">лише якщо ALS</text>
+  <text class="t" x="276" y="496">і контент порожні</text>
+
+  <rect class="box" x="600" y="400" width="390" height="125"/>
+  <text class="h" x="616" y="436">Гібридний top-k</text>
+  <text class="t" x="616" y="468">оцінка й внесок</text>
+  <text class="t" x="616" y="496">кожної моделі</text>
+
+  <path class="ln" d="M200 220 H230 V100 H258"/>
+  <path class="ln" d="M200 280 H258"/>
+  <path class="dl" d="M200 300 H230 V462 H258"/>
+  <path class="ln" d="M540 100 H598"/>
+  <path class="ln" d="M540 280 H598"/>
+  <path class="ln" d="M795 350 V398"/>
+  <path class="dl" d="M540 462 H598"/>
+  <text class="lb" x="40" y="384">порожня історія</text>
+  <text class="lb" x="40" y="406">або нема сигналу</text>
+</svg>

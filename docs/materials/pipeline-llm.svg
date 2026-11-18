@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" width="1000" height="640" font-family="'IBM Plex Sans','Segoe UI',Arial,sans-serif" fill="#16161a">
+  <title>Отримання рекомендацій і пояснень Qwen3</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#16161a"/>
+    </marker>
+    <marker id="e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9c3320"/>
+    </marker>
+    <style>
+      .box{fill:#fafaf7;stroke:#16161a;stroke-width:2}
+      .q{fill:#ffffff;stroke:#16161a;stroke-width:2}
+      .err{fill:#ffffff;stroke:#9c3320;stroke-width:2;stroke-dasharray:7 5}
+      .ok{fill:#ffffff;stroke:#2c5a3b;stroke-width:2.4}
+      .h{font-weight:700;font-size:24px}
+      .t{font-size:21px}
+      .m{font-family:'IBM Plex Mono',Consolas,monospace;font-size:19px}
+      .lb{font-family:'IBM Plex Mono',Consolas,monospace;font-size:18px}
+      .lane{font-family:'IBM Plex Mono',Consolas,monospace;font-size:20px;font-weight:700}
+      .ln{stroke:#16161a;stroke-width:2;fill:none;marker-end:url(#a)}
+      .el{stroke:#9c3320;stroke-width:2;fill:none;stroke-dasharray:7 5;marker-end:url(#e)}
+      .rule{stroke:#16161a;stroke-width:2}
+    </style>
+  </defs>
+  <rect width="1000" height="640" fill="#ffffff"/>
+
+  <!-- lane A: GET -->
+  <line class="rule" x1="10" y1="12" x2="990" y2="12"/>
+  <text class="lane" x="10" y="42">GET /recommendations — Qwen3 не викликається</text>
+
+  <rect class="box" x="10" y="70" width="230" height="120"/>
+  <text class="h" x="24" y="106">Гібридний</text>
+  <text class="h" x="24" y="136">список</text>
+  <text class="t" x="24" y="170">ALS + контент</text>
+
+  <rect class="q" x="300" y="70" width="270" height="120"/>
+  <text class="h" x="316" y="106">Кеш актуальний?</text>
+  <text class="t" x="316" y="140">ключ: профіль,</text>
+  <text class="t" x="316" y="168">кандидати, промпт</text>
+
+  <rect class="ok" x="640" y="62" width="350" height="62"/>
+  <text class="t" x="656" y="101">так: порядок і пояснення з кешу</text>
+  <rect class="box" x="640" y="140" width="350" height="62"/>
+  <text class="t" x="656" y="179">ні: гібрид без пояснень</text>
+
+  <path class="ln" d="M240 130 H298"/>
+  <path class="ln" d="M570 110 H600 V93 H638"/>
+  <path class="ln" d="M570 150 H600 V171 H638"/>
+
+  <!-- lane B: POST -->
+  <line class="rule" x1="10" y1="248" x2="990" y2="248"/>
+  <text class="lane" x="10" y="278">POST /recommendations/explain</text>
+
+  <rect class="q" x="10" y="305" width="200" height="120"/>
+  <text class="h" x="24" y="341">Кеш</text>
+  <text class="h" x="24" y="371">актуальний?</text>
+
+  <rect class="box" x="260" y="305" width="220" height="120"/>
+  <text class="h" x="276" y="341">top-30</text>
+  <text class="t" x="276" y="373">гібрида</text>
+  <text class="t" x="276" y="401">+ профіль смаків</text>
+
+  <rect class="box" x="530" y="305" width="200" height="120"/>
+  <text class="h" x="546" y="341">Qwen3 8B</text>
+  <text class="t" x="546" y="373">JSON-відповідь</text>
+  <text class="m" x="546" y="405">≤ 120 с</text>
+
+  <rect class="box" x="780" y="305" width="210" height="120"/>
+  <text class="h" x="796" y="341">Перевірка</text>
+  <text class="t" x="796" y="373">номери, повтори,</text>
+  <text class="t" x="796" y="401">тексти</text>
+
+  <rect class="ok" x="10" y="490" width="200" height="90"/>
+  <text class="t" x="24" y="527">відповідь</text>
+  <text class="t" x="24" y="557">з кешу</text>
+
+  <rect class="err" x="260" y="490" width="470" height="140"/>
+  <text class="h" x="276" y="526">Гібридний top-10 без пояснень</text>
+  <text class="t" x="276" y="558">не кешується; так само, якщо</text>
+  <text class="t" x="276" y="586">профіль змінився під час</text>
+  <text class="t" x="276" y="614">генерації</text>
+
+  <rect class="ok" x="780" y="490" width="210" height="140"/>
+  <text class="h" x="796" y="526">top-10</text>
+  <text class="t" x="796" y="558">з поясненнями,</text>
+  <text class="t" x="796" y="586">решта — гібрид</text>
+  <text class="m" x="796" y="616">→ llm_cache</text>
+
+  <path class="ln" d="M210 365 H258"/>
+  <text class="lb" x="218" y="355">ні</text>
+  <path class="ln" d="M480 365 H528"/>
+  <path class="ln" d="M730 365 H778"/>
+  <path class="ln" d="M110 425 V488"/>
+  <path class="ln" d="M885 425 V488"/>
+  <text class="lb" x="895" y="462">≥ 1</text>
+  <path class="el" d="M630 425 V488"/>
+  <text class="lb" x="640" y="452" fill="#9c3320">помилка,</text>
+  <text class="lb" x="640" y="474" fill="#9c3320">таймаут</text>
+  <path class="el" d="M830 425 V455 H760 V560 H732"/>
+  <text class="lb" x="766" y="452" fill="#9c3320">0</text>
+  <text class="lb" x="120" y="462">так</text>
+</svg>

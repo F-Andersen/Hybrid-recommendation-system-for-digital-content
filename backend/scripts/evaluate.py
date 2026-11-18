@@ -389,14 +389,16 @@ def draw_charts(rows: list[Row], domain: Domain, stamp: str, out: Path) -> list[
         ax.text(value, y, f" {value:.3f}", va="center", fontsize=8, color=ink)
     ax.set_yticks(positions, labels)
     ax.invert_yaxis()
+    ax.set_xlim(0, max(all_values + cold_values) * 1.15)
     ax.set_xlabel("NDCG@10")
     ax.set_title(f"{title}: NDCG@10 на тестовій вибірці", loc="left", fontweight="bold")
     ax.grid(axis="x", color=line, linewidth=0.6)
     ax.set_axisbelow(True)
-    ax.legend(frameon=False, loc="lower right", fontsize=8)
+    # Legend below the axes so it never covers bars.
+    ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(0, -0.16), ncol=2, fontsize=8)
     fig.tight_layout()
     name = f"{domain}_{stamp}_ndcg10.png"
-    fig.savefig(out / name, dpi=150)
+    fig.savefig(out / name, dpi=200, bbox_inches="tight")
     plt.close(fig)
     files.append(name)
 
@@ -413,11 +415,13 @@ def draw_charts(rows: list[Row], domain: Domain, stamp: str, out: Path) -> list[
         ax.set_xticks(KS)
         ax.set_xlabel("K")
         ax.grid(color=line, linewidth=0.6)
-    axes[0].legend(frameon=False, fontsize=7)
+    handles, names = axes[0].get_legend_handles_labels()
     fig.suptitle(f"{title}: метрики за K", x=0.01, ha="left", fontweight="bold")
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.1, 1, 1))
+    # One shared legend under all panels, outside the data area.
+    fig.legend(handles, names, frameon=False, loc="lower center", ncol=len(names), fontsize=8)
     name = f"{domain}_{stamp}_by_k.png"
-    fig.savefig(out / name, dpi=150)
+    fig.savefig(out / name, dpi=200, bbox_inches="tight")
     plt.close(fig)
     files.append(name)
     return files
@@ -551,9 +555,27 @@ def main(argv: Sequence[str] | None = None, runner: Callable[..., Any] = run) ->
                         help="підвибірка тестових користувачів (0 — усі); для швидкої перевірки")
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--redraw", action="store_true",
+                        help="лише перемалювати графіки з останнього звіту, без обчислень")
     args = parser.parse_args(argv)
     for domain in ("movie", "book") if args.domain == "all" else (args.domain,):
-        runner(args, domain)
+        if args.redraw:
+            redraw(args.output_dir or get_settings().artifacts_dir / "eval", domain)
+        else:
+            runner(args, domain)
+
+
+def redraw(out: Path, domain: Domain) -> list[str]:
+    """Regenerate charts from `{domain}_latest.json` and its CSV; file names stay the same."""
+    meta = json.loads((out / f"{domain}_latest.json").read_text(encoding="utf-8"))
+    csv_name: str = meta["files"]["csv"]
+    with (out / csv_name).open(encoding="utf-8", newline="") as stream:
+        rows: list[Row] = [{**row, "k": int(row["k"]), "value": float(row["value"]),
+                            "users": int(row["users"])} for row in csv.DictReader(stream)]
+    stamp = csv_name.removeprefix(f"{domain}_").removesuffix(".csv")
+    files = draw_charts(rows, domain, stamp, out)
+    print(f"{domain}: перемальовано {', '.join(files)}")
+    return files
 
 
 if __name__ == "__main__":

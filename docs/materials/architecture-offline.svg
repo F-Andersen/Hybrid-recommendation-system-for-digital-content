@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560" font-family="'IBM Plex Sans','Segoe UI',Arial,sans-serif" fill="#16161a">
+  <title>Офлайн-підготовка даних і моделей</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#16161a"/>
+    </marker>
+    <style>
+      .box{fill:#fafaf7;stroke:#16161a;stroke-width:2}
+      .ext{fill:#ffffff;stroke:#16161a;stroke-width:1.6;stroke-dasharray:7 5}
+      .h{font-weight:700;font-size:24px}
+      .t{font-size:21px}
+      .m{font-family:'IBM Plex Mono',Consolas,monospace;font-size:19px}
+      .zl{font-family:'IBM Plex Mono',Consolas,monospace;font-size:17px;fill:#5d5c55;letter-spacing:.06em}
+      .ln{stroke:#16161a;stroke-width:2;fill:none;marker-end:url(#a)}
+      .sep{stroke:#c9c8c1;stroke-width:1.4}
+    </style>
+  </defs>
+  <rect width="1000" height="560" fill="#ffffff"/>
+
+  <text class="zl" x="10" y="24">ВІДКРИТІ ДЖЕРЕЛА</text>
+  <rect class="ext" x="10" y="36" width="230" height="90"/>
+  <text class="h" x="24" y="70">MovieLens 25M</text>
+  <text class="t" x="24" y="102">оцінки, теги</text>
+  <rect class="ext" x="263" y="36" width="230" height="90"/>
+  <text class="h" x="277" y="70">Book-Crossing</text>
+  <text class="t" x="277" y="102">оцінки книг</text>
+  <rect class="ext" x="516" y="36" width="230" height="90"/>
+  <text class="h" x="530" y="70">Open Library</text>
+  <text class="t" x="530" y="102">анотації, ISBN</text>
+  <rect class="ext" x="769" y="36" width="221" height="90"/>
+  <text class="h" x="783" y="70">TMDB</text>
+  <text class="t" x="783" y="102">постери</text>
+
+  <rect class="box" x="10" y="180" width="980" height="170"/>
+  <text class="h" x="26" y="216">Скрипти в контейнері api (той самий код recsys/, без FastAPI)</text>
+  <line class="sep" x1="26" y1="232" x2="974" y2="232"/>
+  <text class="m" x="26" y="266">download_data</text>
+  <text class="m" x="26" y="296">import_movielens, import_bookcrossing</text>
+  <text class="t" x="26" y="328">оцінки → єдина шкала 1–10</text>
+  <text class="m" x="520" y="266">enrich_openlibrary, fetch_covers</text>
+  <text class="m" x="520" y="296">build_embeddings</text>
+  <text class="m" x="520" y="326">train_als, evaluate</text>
+
+  <rect class="box" x="10" y="420" width="300" height="125"/>
+  <text class="h" x="26" y="456">db · PostgreSQL</text>
+  <text class="t" x="26" y="488">каталог, оцінки,</text>
+  <text class="m" x="26" y="518">items.embedding</text>
+
+  <rect class="box" x="350" y="420" width="300" height="125"/>
+  <text class="h" x="366" y="456">Том artifacts</text>
+  <text class="t" x="366" y="488">моделі ALS,</text>
+  <text class="t" x="366" y="516">звіти CSV, PNG</text>
+
+  <rect class="box" x="690" y="420" width="300" height="125"/>
+  <text class="h" x="706" y="456">Ollama (хост)</text>
+  <text class="m" x="706" y="488">bge-m3 — вектори</text>
+  <text class="m" x="706" y="516">qwen3:8b — evaluate</text>
+
+  <path class="ln" d="M125 126 V178"/>
+  <path class="ln" d="M378 126 V178"/>
+  <path class="ln" d="M631 126 V178"/>
+  <path class="ln" d="M879 126 V178"/>
+  <path class="ln" d="M160 350 V418"/>
+  <path class="ln" d="M500 350 V418"/>
+  <path class="ln" d="M820 350 V418"/>
+  <path class="ln" d="M860 418 V352"/>
+</svg>
