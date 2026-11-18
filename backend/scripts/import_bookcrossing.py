@@ -113,7 +113,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Імпорт Book-Crossing")
     parser.add_argument("--input-dir", type=Path)
     parser.add_argument("--min-user", type=int, default=5)
-    parser.add_argument("--min-book", type=int, default=10)
+    parser.add_argument("--min-book", type=int, default=5)
     args = parser.parse_args()
     with SessionLocal.begin() as session:
         summary = import_dataset(

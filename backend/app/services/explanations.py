@@ -3,8 +3,9 @@
 import hashlib
 import json
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
@@ -77,7 +78,17 @@ GENRE_LABELS = {
 }
 
 
-def candidate_evidence(item: Item, high: list[tuple[Rating, Item]]) -> str:
+class RatingLike(Protocol):
+    """A stored Rating or an in-memory HistoryRating (offline evaluation)."""
+
+    @property
+    def value(self) -> int | None: ...
+
+    @property
+    def implicit(self) -> bool: ...
+
+
+def candidate_evidence(item: Item, high: Sequence[tuple[RatingLike, Item]]) -> str:
     if item.domain == "book":
         authors = {name.casefold().strip(): name for name in item.creators}
         for _, liked in high:
@@ -108,6 +119,41 @@ def candidate_evidence(item: Item, high: list[tuple[Rating, Item]]) -> str:
     ) else "Кандидат присутній у добірці; запропонуй розглянути його без припущень про смаки."
 
 
+def explanation_messages(
+    ratings: Sequence[tuple[RatingLike, Item]], recent_views: Sequence[Item],
+    candidates: Sequence[Item], rating_counts: Mapping[int, int] | None = None,
+) -> list[dict[str, str]]:
+    """Prompt for the reranker. Pure: shared by the API and offline evaluation.
+
+    `ratings` must be ordered by item ID, `recent_views` newest first, `candidates` in hybrid
+    order (at most 30). `rating_counts` overrides `Item.rating_count`, so experiments can pass
+    training-only popularity instead of counts that include held-out interactions.
+    """
+    explicit = [(rating, item) for rating, item in ratings if rating.value is not None]
+    high = sorted([(rating, item) for rating, item in explicit if rating.value >= 6],
+                  key=lambda pair: (-pair[0].value, pair[1].id))[:15]
+    low = sorted([(rating, item) for rating, item in explicit if rating.value <= 5],
+                 key=lambda pair: (pair[0].value, pair[1].id))[:5]
+    genres = Counter(genre for rating, item in ratings
+                     if rating.implicit or (rating.value is not None and rating.value >= 6)
+                     for genre in item.genres)
+    profile = {
+        "high_rated": [{**_summary(item), "rating": rating.value} for rating, item in high],
+        "low_rated": [{**_summary(item), "rating": rating.value} for rating, item in low],
+        "recent_views": [_summary(item) for item in recent_views],
+        "top_genres": [genre[:60] for genre, _ in sorted(
+            genres.items(), key=lambda pair: (-pair[1], pair[0]),
+        )[:8]],
+    }
+    prompt_candidates = [{"n": n, **_summary(item),
+                          "description": (item.description or "")[:200],
+                          "evidence": candidate_evidence(item, high),
+                          "rating_count": (item.rating_count if rating_counts is None
+                                           else rating_counts.get(item.id, 0))}
+                         for n, item in enumerate(candidates[:30], start=1)]
+    return build_messages(profile, prompt_candidates)
+
+
 def prepare_explanation(
     db: Session, user_id: int, domain: Domain, als: AlsRecommender | None,
     model_name: str, *, k: int = 30,
@@ -127,28 +173,10 @@ def prepare_explanation(
     views = db.execute(select(Interaction, Item).join(Item).options(defer(Item.embedding)).where(
         Interaction.user_id == user_id, Item.domain == domain,
     ).order_by(Interaction.created_at.desc(), Interaction.id.desc()).limit(10)).all()
-    explicit = [(rating, item) for rating, item in ratings if rating.value is not None]
-    high = sorted([(rating, item) for rating, item in explicit if rating.value >= 6],
-                  key=lambda pair: (-pair[0].value, pair[1].id))[:15]
-    low = sorted([(rating, item) for rating, item in explicit if rating.value <= 5],
-                 key=lambda pair: (pair[0].value, pair[1].id))[:5]
-    genres = Counter(genre for rating, item in ratings
-                     if rating.implicit or (rating.value is not None and rating.value >= 6)
-                     for genre in item.genres)
-    profile = {
-        "high_rated": [{**_summary(item), "rating": rating.value} for rating, item in high],
-        "low_rated": [{**_summary(item), "rating": rating.value} for rating, item in low],
-        "recent_views": [_summary(item) for _, item in views],
-        "top_genres": [genre[:60] for genre, _ in sorted(
-            genres.items(), key=lambda pair: (-pair[1], pair[0]),
-        )[:8]],
-    }
-    prompt_candidates = [{"n": n, **_summary(items[row.item.id]),
-                          "description": (items[row.item.id].description or "")[:200],
-                          "evidence": candidate_evidence(items[row.item.id], high),
-                          "rating_count": row.item.rating_count}
-                         for n, row in enumerate(candidates[:30], start=1)]
-    messages = build_messages(profile, prompt_candidates)
+    messages = explanation_messages(
+        [(rating, item) for rating, item in ratings], [item for _, item in views],
+        [items[row.item.id] for row in candidates[:30]],
+    )
     fingerprint = {
         "version": PROMPT_VERSION, "model": model_name, "messages": messages,
         "ratings": [(rating.item_id, rating.value, rating.implicit,

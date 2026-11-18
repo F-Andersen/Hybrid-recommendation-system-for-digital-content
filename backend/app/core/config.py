@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +17,8 @@ class Settings(BaseSettings):
     admin_token: str = "change-me"
     artifacts_dir: Path = Path("artifacts")
     data_dir: Path = Path("data")
+    tmdb_api_key: SecretStr = SecretStr("")
+    tmdb_access_token: SecretStr = SecretStr("")
 
 
 @lru_cache

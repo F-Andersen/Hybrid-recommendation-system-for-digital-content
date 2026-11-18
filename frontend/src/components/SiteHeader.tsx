@@ -16,6 +16,7 @@ export async function SiteHeader() {
           { href: "/profile", label: "Профіль" },
         ]
       : []),
+    { href: "/evaluation", label: "Оцінювання" },
   ];
 
   return (

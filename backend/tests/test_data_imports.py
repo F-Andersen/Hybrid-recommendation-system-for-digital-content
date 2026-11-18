@@ -83,6 +83,38 @@ def test_movie_import_is_repeatable_and_normalizes_data(sessions, movie_files):
         import_movies(session, movie_files, "ml-1m")
 
 
+def test_large_variant_filters_catalog_samples_users_and_replaces(sessions, movie_files):
+    with sessions.begin() as session:
+        import_movies(session, movie_files, "ml-latest-small")
+        old_movie = session.scalar(select(Item.id).where(Item.external_id == "1"))
+    # 25M-style data: film 1 has 3 ratings, film 2 only 1 -> filtered by min_movie_ratings=2
+    write_csv(movie_files / "ratings.csv", ["userId", "movieId", "rating", "timestamp"], [
+        (10, 1, "4.5", 100), (11, 1, "3.0", 101), (12, 1, "5.0", 102), (10, 2, "2.0", 103),
+        (10, 1, "1.0", 99), (13, 1, "9.0", 104),
+    ])
+    with sessions.begin() as session, pytest.raises(ValueError, match="змішувати"):
+        import_movies(session, movie_files, "ml-25m")
+    with sessions.begin() as session:
+        result = import_movies(session, movie_files, "ml-25m", replace=True,
+                               min_movie_ratings=2)
+        assert (result.items, result.users, result.ratings) == (1, 3, 3)
+        assert (result.skipped, result.duplicates) == (1, 2)
+        movie = session.scalar(select(Item).where(Item.external_id == "1"))
+        assert movie.id == old_movie  # same movieId keeps its row (embedding, poster)
+        assert movie.meta["dataset_variant"] == "ml-25m"
+        assert movie.rating_count == 3
+        assert session.scalar(select(Item).where(Item.external_id == "2")) is None
+        externals = set(session.scalars(select(User.external_id).where(
+            User.source == "movielens")))
+        assert externals == {"10", "11", "12"}  # old users of the small variant removed
+        value = session.scalar(select(Rating.value).join(User).where(User.external_id == "10"))
+        assert value == 9  # latest of the duplicated (10, 1) ratings, scaled to 1-10
+    with sessions.begin() as session:
+        sampled = import_movies(session, movie_files, "ml-25m", replace=True,
+                                min_movie_ratings=2, max_users=2)
+        assert sampled.users == 2
+
+
 def test_movielens_1m_dat_format(sessions, tmp_path):
     (tmp_path / "movies.dat").write_text("1::Amélie (2001)::Comedy|Romance\n", encoding="latin-1")
     (tmp_path / "ratings.dat").write_text("1::1::4::100\n", encoding="latin-1")

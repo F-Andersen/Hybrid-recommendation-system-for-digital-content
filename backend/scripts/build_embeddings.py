@@ -5,6 +5,7 @@ import asyncio
 import json
 from collections.abc import Awaitable, Callable
 
+import httpx
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -78,7 +79,16 @@ async def run(domain: Domain | None, batch_size: int, limit: int | None) -> None
     client = OllamaClient(settings.ollama_base_url, timeout=300)
     try:
         async def embed(texts: list[str]) -> list[list[float]]:
-            return await client.embed(texts, settings.embed_model)
+            # Ollama can briefly answer 400/5xx while it swaps models in VRAM.
+            for attempt in range(4):
+                try:
+                    return await client.embed(texts, settings.embed_model)
+                except httpx.HTTPError as error:
+                    if attempt == 3:
+                        raise
+                    print(f"Ollama: {type(error).__name__}, повтор через {5 * 2 ** attempt} с")
+                    await asyncio.sleep(5 * 2 ** attempt)
+            raise AssertionError("unreachable")
 
         result = await build_embeddings(
             SessionLocal, embed, domain=domain, batch_size=batch_size, limit=limit,

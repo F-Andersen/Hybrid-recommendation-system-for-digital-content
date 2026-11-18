@@ -5,7 +5,17 @@ from weakref import WeakValueDictionary
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 
-from app.api import admin, auth, health, items, me, onboarding, ratings, recommendations
+from app.api import (
+    admin,
+    auth,
+    evaluation,
+    health,
+    items,
+    me,
+    onboarding,
+    ratings,
+    recommendations,
+)
 from app.core.config import get_settings
 from app.llm.client import OllamaClient
 from app.recsys.als import load_available_models
@@ -30,3 +40,4 @@ app.include_router(ratings.router)
 app.include_router(me.router)
 app.include_router(onboarding.router)
 app.include_router(recommendations.router)
+app.include_router(evaluation.router)

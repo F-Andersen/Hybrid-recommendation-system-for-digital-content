@@ -1,6 +1,9 @@
 # environment
 .env
 
+# Master's thesis drafts, examples and sources (local only)
+/diploma/
+
 # data and trained artifacts
 data/
 backend/artifacts/*

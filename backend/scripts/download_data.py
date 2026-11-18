@@ -106,7 +106,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Завантаження датасетів")
     parser.add_argument("--dataset", choices=("all", "movielens", "bookcrossing"), default="all")
     parser.add_argument(
-        "--variant", choices=("ml-latest-small", "ml-1m"), default="ml-latest-small",
+        "--variant", choices=("ml-latest-small", "ml-1m", "ml-25m"), default="ml-25m",
     )
     parser.add_argument("--bookcrossing-source", choices=("github", "official"), default="github")
     parser.add_argument("--bookcrossing-url", default=BOOKCROSSING_URL)

@@ -1,27 +1,26 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font/google";
+import { JetBrains_Mono, Manrope, Unbounded } from "next/font/google";
 import Link from "next/link";
 
 import { SiteHeader } from "@/components/SiteHeader";
 
 import "./globals.css";
 
-const plexSans = IBM_Plex_Sans({
+// All three families ship basic Cyrillic, so Ukrainian text never falls back.
+const manrope = Manrope({
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
 });
-// Plex Sans Condensed has no basic Cyrillic (U+0400-045F); Ukrainian glyphs fall back
-// to Plex Sans via the --condensed font stack in globals.css.
-const plexCondensed = IBM_Plex_Sans_Condensed({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-condensed",
-});
-const plexMono = IBM_Plex_Mono({
+const unbounded = Unbounded({
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
+  weight: ["500", "600"],
+  variable: "--font-display",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin", "cyrillic"],
+  weight: ["400"],
+  variable: "--font-code",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uk" className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}`}>
+    <html lang="uk" className={`${manrope.variable} ${unbounded.variable} ${jetbrainsMono.variable}`}>
       <body>
         <a href="#main" className="skip-link">
           Перейти до вмісту
@@ -41,7 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           {children}
         </main>
         <footer className="site-footer">
-          <div className="wrap footer-row mono">
+          <div className="wrap footer-row">
             <span>ALS · BGE-M3 · Qwen3 8B (Ollama, локально)</span>
             <Link href="/status">Стан системи</Link>
           </div>
